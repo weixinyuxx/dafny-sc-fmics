@@ -46,6 +46,25 @@ module test_GInv_Correctness {
         requires totalAmount != 10
         ensures !GInv(totalAmount, balances)
     {
+        // the test is intended to show that when balances == map[Account(100, false) := 10],
+        // in order to have GInv established, the totalAmount cannot be anything other than 10
+
+        // guideline 1,2: both fails
+
+        // guideline 3: to prove: sum(map[Account(100, false) := 10]) == 10, but it does not relate to any complex data type / expression, so no need to assert it (although one certainly can)
+        // think about why this should be true:
+        // either of the following way will lead to a passing proof, where the first one requires more insight, and the second one takes more advange of Dafny
+        //  1. recursive perspective: (guideline 3 main part, and 3a)
+        // guideline 3: think about the relationship between the map map[Account(100, false) := 10] we have and the sum of it
+        //              from a recursive perspective, we take the element out one at a time
+        // guideline 3a: this includes manipulatin of maps
+        assert sum(balances) == sum(map[]) + 10;
+
+        //  2. do not have insight, just dig into the sum function
+        // guideline 3d: the goal is then to prove mapSum(map[Account(100, false) := 10]) == 10, but no need to assert it since no relation to complex data structure/expression
+        // guideline 3d(ii): look into the body of function mapSum, there is a :| statement, and we thus find a witness: a == Account(100, false) := 10
+        assert Account(100, false) in balances.Keys; // this assertion is not necessary since it is merely checking it is a valid witness
+        // finally, we substitute the value into the statement where it is used
         assert mapSum(balances) == mapSum(map[]) + 10;
     }
 
@@ -93,4 +112,15 @@ module test_GInv_Correctness {
     //     requires totalAmount != 30
     //     ensures !GInv(totalAmount, balances)
     // {}
+
+
+// test axioms
+    lemma test_add(m: map<Address, uint256>, k: Address, v: nat)
+        requires sum(m) == 5
+        requires v == 5
+        requires (if k in m then m[k] else 0) as nat + v <= MAX_UINT256
+        requires sum(m[k := ((if k in m then m[k] else 0) as nat + v) as uint256]) == 10
+        ensures sum(m[k := ((if k in m then m[k] else 0) as nat + v) as uint256]) == sum(m) + v
+    {}
+
 }
