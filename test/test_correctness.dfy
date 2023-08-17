@@ -46,26 +46,21 @@ module test_GInv_Correctness {
         requires totalAmount != 10
         ensures !GInv(totalAmount, balances)
     {
+        var m := map[Account(100, false) := 10];
+        assert sum(m) == 10;
         // the test is intended to show that when balances == map[Account(100, false) := 10],
         // in order to have GInv established, the totalAmount cannot be anything other than 10
 
         // guideline 1,2: both fails
 
-        // guideline 3: to prove: sum(map[Account(100, false) := 10]) == 10, but it does not relate to any complex data type / expression, so no need to assert it (although one certainly can)
-        // think about why this should be true:
-        // either of the following way will lead to a passing proof, where the first one requires more insight, and the second one takes more advange of Dafny
-        //  1. recursive perspective: (guideline 3 main part, and 3a)
-        // guideline 3: think about the relationship between the map map[Account(100, false) := 10] we have and the sum of it
-        //              from a recursive perspective, we take the element out one at a time
-        // guideline 3a: this includes manipulatin of maps
-        assert sum(balances) == sum(map[]) + 10;
+        //  1. manual insight: (guideline 3a)
+        // guideline 3a: Find the property specific to the test input that is central to the answer why it leads to the conclusion you are trying to prove.
+        // guideline 3ai: this includes manipulatin of maps
+        assert sum(map[Account(100, false) := 10]) == 10;
 
-        //  2. do not have insight, just dig into the sum function
-        // guideline 3d: the goal is then to prove mapSum(map[Account(100, false) := 10]) == 10, but no need to assert it since no relation to complex data structure/expression
-        // guideline 3d(ii): look into the body of function mapSum, there is a :| statement, and we thus find a witness: a == Account(100, false) := 10
-        assert Account(100, false) in balances.Keys; // this assertion is not necessary since it is merely checking it is a valid witness
-        // finally, we substitute the value into the statement where it is used
-        assert mapSum(balances) == mapSum(map[]) + 10;
+        //  2. do not have insight, just dig into the predicate function
+        // Digging into GInv, and replace it with the function and value it is invocating:
+        assert sum(map[Account(100, false) := 10]) == 10;
     }
 
     // lemma test_correctness_3(totalAmount:nat, balances:map<Address, uint256>)

@@ -45,11 +45,10 @@ module test_GInv_Provability {
         requires totalAmount == 20
         ensures GInv(totalAmount, balances)
     {
-        // assert Account(100, false) in balances.Keys;
-        // assert map[Account(50, false) := 10] == map key | key in balances.Keys && key != Account(100, false) :: balances[Account(100, false)];
+        assert Account(100, false) in balances.Keys;
+        assert map[Account(50, false) := 10] == map key | key in balances.Keys && key != Account(100, false) :: balances[Account(100, false)];
         assert mapSum(balances) == mapSum(map[Account(50, false) := 10]) + 10;
-        // assert balances[Account(100, false)] + balances[Account(50, false)] == 20;
-        // assert mapSum(balances) == 20;
+        assert mapSum(balances) == 20;
     }
 
     lemma test_provability_4(totalAmount:nat, balances:map<Address, uint256>)
@@ -66,22 +65,22 @@ module test_GInv_Provability {
         // think about why this should be true:
         // either of the following way will lead to a passing proof, where the first one requires more insight, and the second one takes more advange of Dafny
         
-        //  1. recursive perspective: main part of 3, combining 3a
-        // guideline 3: think about the relationship between the map map[Account(100, false) := 10, Account(50, false) := 20] we have and the sum of it
-        //              from a recursive perspective, we take the element out one at a time
-        // guideline 3a: this includes manipulatin of maps
+        //  1. manual insight: (guideline 3a)
+        // guideline 3a: Find the property specific to the test input that is central to the answer why it leads to the conclusion you are trying to prove.
+        // guideline 3a(i): this includes manipulatin of maps
         assert mapSum(balances) == mapSum(map[Account(50, false) := 20]) + 10; // !!!: this line is mentioned later, come back when appropriate
 
         assert sum(balances) == sum(map[Account(50, false) := 20]) + 10;
-        // guideline 4a: different from the case in test_correctness_2, the assertion with sum function fails
+        // guideline 4a: the assertion with sum function fails
         //               since the GInv is indeed established assuming this assertion is true, the remaining work is to prove this assertion
-        // guideline 3d: dig into the sum function in this assertion, the goal is then to prove: mapSum(balances) == mapSum(map[Account(50, false) := 20]) + 10;
-        // one either tries to assert this directly, or find that this already includes a witness for a (guideline 3d(ii)), and then asserts it (it should appear before the previously failing assertion)
-        // the proof then passes
+        // guideline 3b(ii): dig into the sum function in this assertion, the goal is then to prove: mapSum(balances) == mapSum(map[Account(50, false) := 20]) + 10;
+        // one asserts this directly, the proof then passes
 
+        // The first way takes an inductive perspective of the problem, which is indeed not obvious. One can instead use the following way:
         // 2. dig into Dafny
-        // guideline 3d: dig into sum function, the goal is then to prove: mapSum(Account(100, false) := 10, Account(50, false) := 20) == 30
-        // guideline 3d(ii): dig into mapSum function, find a witness for a = Account(100, false), and assert the statement where it is used
+        // guideline 3b(ii): dig into sum function, the goal is then to prove: mapSum(Account(100, false) := 10, Account(50, false) := 20) == 30
+        // guideline 3d(v): dig into mapSum function, find a witness for a = Account(100, false)
+        // Specifically, if it is the return value of a function, assert that the original invocation of the function does equal to the expression instantiated with the witness:
         assert mapSum(balances) == mapSum(map[Account(50, false) := 20]) + 10;
 
     }
