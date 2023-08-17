@@ -77,7 +77,7 @@ class Token extends Account {
         requires msg.value == 0;
         requires balances[from] >= amount && msg.sender == from 
         requires to !in balances ||  balances[to] as nat + amount as nat <= MAX_UINT256
-        requires msg.sender == from 
+        requires msg.sender == from  
         requires GInv()
 
         ensures GInv()
@@ -90,10 +90,14 @@ class Token extends Account {
         modifies this
     {
         balance := balance + msg.value;
-        var newAmount: uint256 := balances[from] - amount ;
+        var newAmount: uint256 := balances[from] - amount;
         //  Use lemma
         mapAddSub(balances, from, to, amount);
         balances := balances[to := (if to in balances then balances[to] else 0) + amount] ;
+        // if balances[to] < 10 {
+        //     totalAmount := totalAmount + 1;
+        //     balances := balances[to := balances[to] + 1];
+        // }
         balances := balances[from := newAmount];
         g := gas - 1;
     }  
@@ -138,7 +142,9 @@ class Token extends Account {
     *  @returns    The sum of the elements in the map.
     */
 function sum(m: map<Address, uint256>): nat
-    ensures sum(map[]) == 0
+    ensures m == map[] ==> sum(m) == 0
+    ensures forall k:Address, v:nat :: sum(m[k := ((if k in m then m[k] else 0) as nat + v) as uint256]) == sum(m) + v
+    ensures forall k1:Address, k2:Address, v:nat :: sum(m[k2 := ((if k2 in m then m[k2] as nat else 0) + v) as uint256][k1 := (m[k1] - v)]) == sum(m)
 
 /**
     *  Add a number to a map value.
